@@ -148,6 +148,10 @@ class DatabaseHelper {
       return Student(
         name: maps[index]['name'],
         status: maps[index]['status'],
+        firstQuarterGrade: maps[index]['firstQuarterGrade'],
+        secondQuarterGrade: maps[index]['secondQuarterGrade'],
+        thirdQuarterGrade: maps[index]['thirdQuarterGrade'],
+        fourthQuarterGrade: maps[index]['fourthQuarterGrade'],
       );
     });
   }
@@ -326,27 +330,27 @@ class DatabaseHelper {
       onCreate: (Database db, int version) async {
         await db.execute('''
         CREATE TABLE students(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
           subjectCode TEXT,
           name TEXT,
-          status TEXT
+          status TEXT,
+          firstQuarterGrade TEXT,
+          secondQuarterGrade TEXT,
+          thirdQuarterGrade TEXT,
+          fourthQuarterGrade TEXT
         )
       ''');
 
         await db.execute('''
         CREATE TABLE attendance(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
           subjectCode TEXT,
           studentName TEXT,
           status TEXT,
-
           date TEXT
         )
       ''');
 
         await db.execute('''
         CREATE TABLE users(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
           username TEXT,
           password TEXT,
           role TEXT
@@ -574,12 +578,23 @@ class LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _loginUsernameController,
                       decoration: InputDecoration(
-                        labelText: 'Username',
+                        labelText: 'Student Name',
                         filled: true,
                         fillColor: const Color(0xffBEA18E),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        labelStyle: const TextStyle(color: Colors.black),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -593,6 +608,17 @@ class LoginScreenState extends State<LoginScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        labelStyle: const TextStyle(color: Colors.black),
                         suffixIcon: IconButton(
                           icon: Icon(
                             obscurePassword
@@ -788,12 +814,23 @@ class LoginScreenState extends State<LoginScreen> {
                     TextField(
                       controller: _registerUsernameController,
                       decoration: InputDecoration(
-                        labelText: 'Username',
+                        labelText: 'Student Name',
                         filled: true,
                         fillColor: const Color(0xffBEA18E),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        labelStyle: const TextStyle(color: Colors.black),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -807,6 +844,17 @@ class LoginScreenState extends State<LoginScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 1.0),
+                        ),
+                        labelStyle: const TextStyle(color: Colors.black),
                         suffixIcon: IconButton(
                           icon: Icon(
                             obscurePassword
@@ -1087,21 +1135,6 @@ class RoundedCheckbox extends StatelessWidget {
   }
 }
 
-class Student {
-  String name;
-  String status;
-
-  Student({required this.name, this.status = ''});
-
-  Map<String, dynamic> toMap(String subjectCode) {
-    return {
-      'subjectCode': subjectCode,
-      'name': name,
-      'status': status,
-    };
-  }
-}
-
 class SubjectList extends StatelessWidget {
   final String role;
   final String teacherUsername;
@@ -1331,13 +1364,165 @@ class SubjectList extends StatelessWidget {
   }
 }
 
-class SubjectScreen extends StatefulWidget {
+class SubjectTile extends StatelessWidget {
   final String subjectCode;
   final String role;
   final String teacherUsername;
   final DatabaseHelper databaseHelper;
 
-  const SubjectScreen(
+  const SubjectTile(
+    this.subjectCode, {
+    super.key,
+    required this.role,
+    required this.teacherUsername,
+    required this.databaseHelper,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.all(10.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18.0),
+      ),
+      child: InkWell(
+        onTap: () {
+          _showOptionsDialog(context);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.0),
+            color: const Color(0xffBEA18E),
+          ),
+          padding: const EdgeInsets.all(8.0),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  subjectCode,
+                  style: const TextStyle(fontSize: 18.0),
+                ),
+                const SizedBox(height: 8.0),
+                FutureBuilder<List<Teacher>>(
+                  future: databaseHelper.getTeachers(subjectCode),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text('Teacher: None');
+                    } else {
+                      // Display the teacher's name
+                      return Text('Teacher: ${snapshot.data![0].name}');
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showOptionsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xffBEA18E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        title: const Text(
+          'Select Option',
+          style: TextStyle(
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF45191C),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Attendance'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AttendanceScreen(
+                      subjectCode,
+                      role,
+                      teacherUsername: teacherUsername,
+                      databaseHelper: databaseHelper,
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Grade'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GradeScreen(
+                      subjectCode,
+                      databaseHelper: databaseHelper,
+                      role,
+                      teacherUsername: teacherUsername,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class Student {
+  String name;
+  String status;
+  String firstQuarterGrade;
+  String secondQuarterGrade;
+  String thirdQuarterGrade;
+  String fourthQuarterGrade;
+
+  Student({
+    required this.name,
+    this.status = '',
+    this.firstQuarterGrade = '0.0',
+    this.secondQuarterGrade = '0.0',
+    this.thirdQuarterGrade = '0.0',
+    this.fourthQuarterGrade = '0.0',
+  });
+  Map<String, dynamic> toMap(String subjectCode) {
+    return {
+      'subjectCode': subjectCode,
+      'name': name,
+      'status': status,
+      'firstQuarterGrade': firstQuarterGrade,
+      'secondQuarterGrade': secondQuarterGrade,
+      'thirdQuarterGrade': thirdQuarterGrade,
+      'fourthQuarterGrade': fourthQuarterGrade,
+    };
+  }
+}
+
+class GradeScreen extends StatefulWidget {
+  final String subjectCode;
+  final String role;
+  final String teacherUsername;
+  final DatabaseHelper databaseHelper;
+
+  const GradeScreen(
     this.subjectCode,
     this.role, {
     super.key,
@@ -1346,10 +1531,454 @@ class SubjectScreen extends StatefulWidget {
   });
 
   @override
-  SubjectScreenState createState() => SubjectScreenState();
+  GradeScreenState createState() => GradeScreenState();
 }
 
-class SubjectScreenState extends State<SubjectScreen> {
+class GradeScreenState extends State<GradeScreen> {
+  List<Student> students = [];
+  List<Student> filteredStudents = [];
+  List<AttendanceRecord> attendanceRecords = [];
+
+  bool _canEditStatus = false;
+
+  final TextEditingController _searchController = TextEditingController();
+  late final DatabaseHelper _databaseHelper;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.subjectCode,
+            style: const TextStyle(color: Color(0xffBEA18E)),
+          ),
+          backgroundColor: const Color(0xFF45191C),
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            await loadData();
+          },
+          child: Column(
+            children: [
+              if (students.isNotEmpty) _buildSearchField(),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filteredStudents.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10.0),
+                        color: const Color(0xFF826B5D),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onLongPress: () {
+                                _showEditStudentDialog(context,
+                                    initialName: filteredStudents[index].name);
+                              },
+                              onTap: () {
+                                _showStudentNamePopup(
+                                    context, filteredStudents[index].name);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  color: const Color(0xffBEA18E),
+                                ),
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  filteredStudents[index].name,
+                                  style: const TextStyle(fontSize: 12.0),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Color(0xFFBEA18E),
+                            ),
+                            onPressed: () {
+                              _showGradePopup(context, index);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ));
+  }
+
+  _showGradePopup(BuildContext context, int studentIndex) {
+    TextEditingController firstQuarterGradeController = TextEditingController(
+        text: filteredStudents[studentIndex].firstQuarterGrade);
+    TextEditingController secondQuarterGradeController = TextEditingController(
+        text: filteredStudents[studentIndex].secondQuarterGrade);
+    TextEditingController thirdQuarterGradeController = TextEditingController(
+        text: filteredStudents[studentIndex].thirdQuarterGrade);
+    TextEditingController fourthQuarterGradeController = TextEditingController(
+        text: filteredStudents[studentIndex].fourthQuarterGrade);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xffBEA18E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        title: const Text(
+          'Edit Student Grades',
+          style: TextStyle(
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF45191C),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
+            color: const Color(0xffBEA18E),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Quarter Grades
+              _buildGradeInput('First Quarter', firstQuarterGradeController),
+              _buildGradeInput('Second Quarter', secondQuarterGradeController),
+              _buildGradeInput('Third Quarter', thirdQuarterGradeController),
+              _buildGradeInput('Fourth Quarter', fourthQuarterGradeController),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Color(0xFF45191C),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: !_canEditStatus
+                ? null // Disable save button for students
+                : () async {
+                    String newFirstQuarterGrade =
+                        firstQuarterGradeController.text.trim();
+                    String newSecondQuarterGrade =
+                        secondQuarterGradeController.text.trim();
+                    String newThirdQuarterGrade =
+                        thirdQuarterGradeController.text.trim();
+                    String newFourthQuarterGrade =
+                        fourthQuarterGradeController.text.trim();
+
+                    setState(() {
+                      // Update the student's grades
+                      filteredStudents[studentIndex].firstQuarterGrade =
+                          newFirstQuarterGrade;
+                      filteredStudents[studentIndex].secondQuarterGrade =
+                          newSecondQuarterGrade;
+                      filteredStudents[studentIndex].thirdQuarterGrade =
+                          newThirdQuarterGrade;
+                      filteredStudents[studentIndex].fourthQuarterGrade =
+                          newFourthQuarterGrade;
+
+                      // Save the changes to the database
+                      saveData();
+                    });
+                    Navigator.pop(context);
+                  },
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                color: Color(0xFF45191C),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGradeInput(String label, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16.0,
+            color: Color(0xFF45191C),
+          ),
+        ),
+        TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          readOnly: !_canEditStatus,
+          decoration: const InputDecoration(
+            labelText: 'Grade',
+            filled: true,
+            fillColor: Color(0xffBEA18E),
+          ),
+        ),
+        const SizedBox(height: 16.0),
+      ],
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _databaseHelper = widget.databaseHelper;
+    loadData();
+  }
+
+  Future<bool> isTeachingSubject(String subjectCode) async {
+    final List<Teacher> teachers =
+        await _databaseHelper.getTeachers(subjectCode);
+
+    // Check if the teacher's username matches any teacher for the subject
+    return teachers.any((teacher) =>
+        teacher.name.toLowerCase() == widget.teacherUsername.toLowerCase());
+  }
+
+  loadData() async {
+    await _databaseHelper.createAttendanceTable();
+    students = await _databaseHelper.getStudents(widget.subjectCode);
+    attendanceRecords =
+        await _databaseHelper.getAttendanceRecords(widget.subjectCode);
+
+    // Determine user role and set _canEditStatus
+    _canEditStatus =
+        widget.role == 'Teacher' && await isTeachingSubject(widget.subjectCode);
+
+    // Only update filteredStudents if there are existing students
+    if (students.isNotEmpty) {
+      filteredStudents = List.from(students);
+    }
+
+    setState(() {});
+  }
+
+  saveData() async {
+    await _databaseHelper.deleteAllStudents(widget.subjectCode);
+
+    for (var student in students) {
+      await _databaseHelper.insertStudent(student, widget.subjectCode);
+    }
+  }
+
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (query) {
+          _filterStudents(query);
+        },
+        decoration: const InputDecoration(
+          labelText: 'Search',
+          filled: true,
+          fillColor: Color(0xffBEA18E),
+          suffixIcon: Icon(
+            Icons.search,
+            color: Color(0xFF45191C),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _filterStudents(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        // If the query is empty, show all students
+        filteredStudents = List.from(students);
+      } else {
+        // Filter students based on the search query
+        filteredStudents = students
+            .where((student) =>
+                student.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  _showEditStudentDialog(BuildContext context, {String? initialName}) {
+    TextEditingController nameController =
+        TextEditingController(text: initialName);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xffBEA18E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        title: const Text(
+          'Edit Student',
+          style: TextStyle(
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF45191C),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
+            color: const Color(0xffBEA18E),
+          ),
+          child: TextField(
+            controller: nameController,
+            decoration: const InputDecoration(
+              labelText: 'Student Name',
+              filled: true,
+              fillColor: Color(0xffBEA18E),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Color(0xFF45191C),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              String newStudentName = nameController.text.trim();
+              if (newStudentName.isNotEmpty) {
+                setState(() {
+                  if (initialName != null) {
+                    int index = students
+                        .indexWhere((student) => student.name == initialName);
+                    if (index != -1) {
+                      students[index].name = newStudentName;
+                      filteredStudents[index].name = newStudentName;
+
+                      // Update attendance records with the new name
+                      _databaseHelper.updateAttendanceRecordStudentName(
+                          widget.subjectCode, initialName, newStudentName);
+                    }
+                  } else {
+                    // Add the new student to the list
+                    Student newStudent = Student(name: newStudentName);
+                    students.add(newStudent);
+                    filteredStudents.add(newStudent);
+
+                    // Insert the new student into the database
+                    _databaseHelper.insertStudent(
+                        newStudent, widget.subjectCode);
+                  }
+                  // Save the changes to the database
+                  saveData();
+                });
+                Navigator.pop(context);
+              }
+            },
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                color: Color(0xFF45191C),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Function to show the student name popup
+  void _showStudentNamePopup(BuildContext context, String fullName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xffBEA18E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          title: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.info, color: Color(0xFF45191C)),
+              SizedBox(width: 8.0),
+              Text(
+                'Student Name',
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF45191C),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Text(
+                fullName,
+                style: const TextStyle(fontSize: 20.0),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  color: Color(0xFF45191C),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class AttendanceScreen extends StatefulWidget {
+  final String subjectCode;
+  final String role;
+  final String teacherUsername;
+  final DatabaseHelper databaseHelper;
+
+  const AttendanceScreen(
+    this.subjectCode,
+    this.role, {
+    super.key,
+    required this.teacherUsername,
+    required this.databaseHelper,
+  });
+
+  @override
+  AttendanceScreenState createState() => AttendanceScreenState();
+}
+
+class AttendanceScreenState extends State<AttendanceScreen> {
   List<Student> students = [];
   List<Student> filteredStudents = [];
   List<AttendanceRecord> attendanceRecords = [];
@@ -1415,19 +2044,20 @@ class SubjectScreenState extends State<SubjectScreen> {
                             ),
                           ),
                           const SizedBox(width: 8.0),
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10.0),
-                                color: const Color(0xffBEA18E),
-                              ),
-                              padding: const EdgeInsets.all(16.0),
-                              child: Text(
-                                filteredStudents[index].status,
-                                style: const TextStyle(fontSize: 12.0),
+                          if (_canEditStatus)
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  color: const Color(0xffBEA18E),
+                                ),
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  filteredStudents[index].status,
+                                  style: const TextStyle(fontSize: 12.0),
+                                ),
                               ),
                             ),
-                          ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Container(
@@ -1505,21 +2135,19 @@ class SubjectScreenState extends State<SubjectScreen> {
                                         );
                                       },
                                     ),
-                                  if (_canEditStatus) ...[
-                                    const SizedBox(width: 8.0),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.history,
-                                        color: Color(0xFF45191C),
-                                      ),
-                                      onPressed: () {
-                                        _showAttendanceHistoryDialog(
-                                          context,
-                                          student: filteredStudents[index],
-                                        );
-                                      },
+                                  const SizedBox(width: 8.0),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.history,
+                                      color: Color(0xFF45191C),
                                     ),
-                                  ],
+                                    onPressed: () {
+                                      _showAttendanceHistoryDialog(
+                                        context,
+                                        student: filteredStudents[index],
+                                      );
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
@@ -1988,80 +2616,6 @@ class SubjectScreenState extends State<SubjectScreen> {
           ],
         );
       },
-    );
-  }
-}
-
-class SubjectTile extends StatelessWidget {
-  final String subjectCode;
-  final String role;
-  final String teacherUsername;
-  final DatabaseHelper databaseHelper;
-
-  const SubjectTile(
-    this.subjectCode, {
-    super.key,
-    required this.role,
-    required this.teacherUsername,
-    required this.databaseHelper,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(10.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18.0),
-      ),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SubjectScreen(
-                subjectCode,
-                role,
-                teacherUsername: teacherUsername,
-                databaseHelper: databaseHelper,
-              ),
-            ),
-          );
-        },
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.0),
-            color: const Color(0xffBEA18E),
-          ),
-          padding: const EdgeInsets.all(8.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  subjectCode,
-                  style: const TextStyle(fontSize: 18.0),
-                ),
-                const SizedBox(height: 8.0),
-                FutureBuilder<List<Teacher>>(
-                  future: databaseHelper.getTeachers(subjectCode),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('Teacher: None');
-                    } else {
-                      // Display the teacher's name
-                      return Text('Teacher: ${snapshot.data![0].name}');
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
