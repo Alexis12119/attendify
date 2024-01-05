@@ -1264,6 +1264,35 @@ class GradeScreenState extends State<GradeScreen> {
     }
   }
 
+  Widget _buildGradeInput(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16.0,
+              color: Color(0xFF45191C),
+            ),
+          ),
+          TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            readOnly: !_canEditStatus,
+            decoration: const InputDecoration(
+              labelText: 'Grade',
+              filled: true,
+              fillColor: Color(0xffBEA18E),
+            ),
+          ),
+          const SizedBox(height: 16.0),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -1561,35 +1590,6 @@ class GradeScreenState extends State<GradeScreen> {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGradeInput(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16.0,
-              color: Color(0xFF45191C),
-            ),
-          ),
-          TextField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            readOnly: !_canEditStatus,
-            decoration: const InputDecoration(
-              labelText: 'Grade',
-              filled: true,
-              fillColor: Color(0xffBEA18E),
-            ),
-          ),
-          const SizedBox(height: 16.0),
         ],
       ),
     );
