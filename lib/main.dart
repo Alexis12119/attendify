@@ -723,7 +723,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> deleteStudent(String studentName) async {
+  Future<void> deleteStudent(String studentName, String role) async {
     final Database db = await database;
 
     // Delete student from the students table
@@ -732,18 +732,21 @@ class DatabaseHelper {
       where: 'LOWER(name) = ?',
       whereArgs: [studentName.toLowerCase()],
     );
-    // Delete user from the users table
-    await db.delete(
-      'users',
-      where: 'LOWER(username) = ? AND role = ?',
-      whereArgs: [studentName.toLowerCase(), 'Regular Student'],
-    );
-    // Delete user from the users table
-    await db.delete(
-      'users',
-      where: 'LOWER(username) = ? AND role = ?',
-      whereArgs: [studentName.toLowerCase(), 'Irregular Student'],
-    );
+    if (role == 'Regular Student') {
+      // Delete user from the users table
+      await db.delete(
+        'users',
+        where: 'LOWER(username) = ? AND role = ?',
+        whereArgs: [studentName.toLowerCase(), 'Regular Student'],
+      );
+    } else {
+      // Delete user from the users table
+      await db.delete(
+        'users',
+        where: 'LOWER(username) = ? AND role = ?',
+        whereArgs: [studentName.toLowerCase(), 'Irregular Student'],
+      );
+    }
   }
 
   Future<void> deleteTeacher(String username) async {
@@ -1203,32 +1206,6 @@ class GradeScreenState extends State<GradeScreen> {
     }
   }
 
-  Widget _buildGradeInput(String label, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16.0,
-            color: Color(0xFF45191C),
-          ),
-        ),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          readOnly: !_canEditStatus,
-          decoration: const InputDecoration(
-            labelText: 'Grade',
-            filled: true,
-            fillColor: Color(0xffBEA18E),
-          ),
-        ),
-        const SizedBox(height: 16.0),
-      ],
-    );
-  }
-
   Widget _buildSearchField() {
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -1357,13 +1334,18 @@ class GradeScreenState extends State<GradeScreen> {
 
   _showGradePopup(BuildContext context, int studentIndex) {
     TextEditingController firstQuarterGradeController = TextEditingController(
-        text: filteredStudents[studentIndex].firstQuarterGrade);
+      text: filteredStudents[studentIndex].firstQuarterGrade,
+    );
     TextEditingController secondQuarterGradeController = TextEditingController(
-        text: filteredStudents[studentIndex].secondQuarterGrade);
+      text: filteredStudents[studentIndex].secondQuarterGrade,
+    );
     TextEditingController thirdQuarterGradeController = TextEditingController(
-        text: filteredStudents[studentIndex].thirdQuarterGrade);
+      text: filteredStudents[studentIndex].thirdQuarterGrade,
+    );
     TextEditingController fourthQuarterGradeController = TextEditingController(
-        text: filteredStudents[studentIndex].fourthQuarterGrade);
+      text: filteredStudents[studentIndex].fourthQuarterGrade,
+    );
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1371,32 +1353,48 @@ class GradeScreenState extends State<GradeScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
-        title: const Text(
-          'Student Grades',
-          style: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF45191C),
+        title: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text(
+            'Student Grades',
+            style: TextStyle(
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF45191C),
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
         content: SingleChildScrollView(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.0),
-              color: const Color(0xffBEA18E),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Quarter Grades
-                _buildGradeInput('First Quarter', firstQuarterGradeController),
-                _buildGradeInput(
-                    'Second Quarter', secondQuarterGradeController),
-                _buildGradeInput('Third Quarter', thirdQuarterGradeController),
-                _buildGradeInput(
-                    'Fourth Quarter', fourthQuarterGradeController),
-              ],
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10.0),
+                color: const Color(0xffBEA18E),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Quarter Grades
+                  _buildGradeInput(
+                    'First Quarter',
+                    firstQuarterGradeController,
+                  ),
+                  _buildGradeInput(
+                    'Second Quarter',
+                    secondQuarterGradeController,
+                  ),
+                  _buildGradeInput(
+                    'Third Quarter',
+                    thirdQuarterGradeController,
+                  ),
+                  _buildGradeInput(
+                    'Fourth Quarter',
+                    fourthQuarterGradeController,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1405,49 +1403,77 @@ class GradeScreenState extends State<GradeScreen> {
             onPressed: () {
               Navigator.pop(context);
             },
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
+            child: Text(
+              !_canEditStatus ? 'Close' : 'Cancel',
+              style: const TextStyle(
                 color: Color(0xFF45191C),
               ),
             ),
           ),
-          TextButton(
-            onPressed: !_canEditStatus
-                ? null // Disable save button for students
-                : () async {
-                    String newFirstQuarterGrade =
-                        firstQuarterGradeController.text.trim();
-                    String newSecondQuarterGrade =
-                        secondQuarterGradeController.text.trim();
-                    String newThirdQuarterGrade =
-                        thirdQuarterGradeController.text.trim();
-                    String newFourthQuarterGrade =
-                        fourthQuarterGradeController.text.trim();
+          if (_canEditStatus)
+            TextButton(
+              onPressed: () async {
+                String newFirstQuarterGrade =
+                    firstQuarterGradeController.text.trim();
+                String newSecondQuarterGrade =
+                    secondQuarterGradeController.text.trim();
+                String newThirdQuarterGrade =
+                    thirdQuarterGradeController.text.trim();
+                String newFourthQuarterGrade =
+                    fourthQuarterGradeController.text.trim();
 
-                    setState(() {
-                      // Update the student's grades
-                      filteredStudents[studentIndex].firstQuarterGrade =
-                          newFirstQuarterGrade;
-                      filteredStudents[studentIndex].secondQuarterGrade =
-                          newSecondQuarterGrade;
-                      filteredStudents[studentIndex].thirdQuarterGrade =
-                          newThirdQuarterGrade;
-                      filteredStudents[studentIndex].fourthQuarterGrade =
-                          newFourthQuarterGrade;
+                setState(() {
+                  // Update the student's grades
+                  filteredStudents[studentIndex].firstQuarterGrade =
+                      newFirstQuarterGrade;
+                  filteredStudents[studentIndex].secondQuarterGrade =
+                      newSecondQuarterGrade;
+                  filteredStudents[studentIndex].thirdQuarterGrade =
+                      newThirdQuarterGrade;
+                  filteredStudents[studentIndex].fourthQuarterGrade =
+                      newFourthQuarterGrade;
 
-                      // Save the changes to the database
-                      saveData();
-                    });
-                    Navigator.pop(context);
-                  },
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                color: Color(0xFF45191C),
+                  // Save the changes to the database
+                  saveData();
+                });
+                Navigator.pop(context);
+              },
+              child: const Text(
+                'Save',
+                style: TextStyle(
+                  color: Color(0xFF45191C),
+                ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGradeInput(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16.0,
+              color: Color(0xFF45191C),
+            ),
           ),
+          TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            readOnly: !_canEditStatus,
+            decoration: const InputDecoration(
+              labelText: 'Grade',
+              filled: true,
+              fillColor: Color(0xffBEA18E),
+            ),
+          ),
+          const SizedBox(height: 16.0),
         ],
       ),
     );
@@ -2454,7 +2480,7 @@ class SubjectList extends StatelessWidget {
                 await databaseHelper.deleteTeacher(teacherUsername);
               } else if (role == 'Regular Student' ||
                   role == "Irregular Student") {
-                await databaseHelper.deleteStudent(teacherUsername);
+                await databaseHelper.deleteStudent(teacherUsername, role);
               }
               // Navigate to the login screen
               if (!context.mounted) return;
