@@ -596,32 +596,42 @@ class AttendanceScreenState extends State<AttendanceScreen> {
             onPressed: () async {
               String newStudentName = nameController.text.trim();
               if (newStudentName.isNotEmpty) {
-                setState(() {
-                  if (initialName != null) {
-                    int index = students
-                        .indexWhere((student) => student.name == initialName);
-                    if (index != -1) {
-                      students[index].name = newStudentName;
-                      filteredStudents[index].name = newStudentName;
+                bool isUsernameAlreadyTaken =
+                    await _databaseHelper.isUsernameTaken(newStudentName);
+                if (isUsernameAlreadyTaken) {
+                  // Show error dialog if the name is already taken
+                  if (!context.mounted) return;
+                  _showErrorDialog(context,
+                      'Name is already taken. Please choose another name.');
+                } else {
+                  setState(() {
+                    if (initialName != null) {
+                      int index = students
+                          .indexWhere((student) => student.name == initialName);
+                      if (index != -1) {
+                        students[index].name = newStudentName;
+                        filteredStudents[index].name = newStudentName;
 
-                      // Update attendance records with the new name
-                      _databaseHelper.updateAttendanceRecordStudentName(
-                          widget.subjectCode, initialName, newStudentName);
+                        // Update attendance records with the new name
+                        _databaseHelper.updateAttendanceRecordStudentName(
+                            widget.subjectCode, initialName, newStudentName);
+                      }
+                    } else {
+                      // Add the new student to the list
+                      Student newStudent = Student(name: newStudentName);
+                      students.add(newStudent);
+                      filteredStudents.add(newStudent);
+
+                      // Insert the new student into the database
+                      _databaseHelper.insertStudent(
+                          newStudent, widget.subjectCode);
                     }
-                  } else {
-                    // Add the new student to the list
-                    Student newStudent = Student(name: newStudentName);
-                    students.add(newStudent);
-                    filteredStudents.add(newStudent);
-
-                    // Insert the new student into the database
-                    _databaseHelper.insertStudent(
-                        newStudent, widget.subjectCode);
-                  }
-                  // Save the changes to the database
-                  saveData();
-                });
-                Navigator.pop(context);
+                    // Save the changes to the database
+                    saveData();
+                  });
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                }
               }
             },
             child: const Text(
@@ -633,6 +643,54 @@ class AttendanceScreenState extends State<AttendanceScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showErrorDialog(
+      BuildContext context, String errorMessage) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF826B5D),
+          title: const Text(
+            'Error',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF45191C),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  errorMessage,
+                  style: const TextStyle(
+                    color: Color(0xFF45191C),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFBEA18E),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  color: Color(0xFF45191C),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1292,32 +1350,42 @@ class GradeScreenState extends State<GradeScreen> {
             onPressed: () async {
               String newStudentName = nameController.text.trim();
               if (newStudentName.isNotEmpty) {
-                setState(() {
-                  if (initialName != null) {
-                    int index = students
-                        .indexWhere((student) => student.name == initialName);
-                    if (index != -1) {
-                      students[index].name = newStudentName;
-                      filteredStudents[index].name = newStudentName;
+                bool isUsernameAlreadyTaken =
+                    await _databaseHelper.isUsernameTaken(newStudentName);
+                if (isUsernameAlreadyTaken) {
+                  // Show error dialog if the name is already taken
+                  if (!context.mounted) return;
+                  _showErrorDialog(context,
+                      'Name is already taken. Please choose another name.');
+                } else {
+                  setState(() {
+                    if (initialName != null) {
+                      int index = students
+                          .indexWhere((student) => student.name == initialName);
+                      if (index != -1) {
+                        students[index].name = newStudentName;
+                        filteredStudents[index].name = newStudentName;
 
-                      // Update attendance records with the new name
-                      _databaseHelper.updateAttendanceRecordStudentName(
-                          widget.subjectCode, initialName, newStudentName);
+                        // Update attendance records with the new name
+                        _databaseHelper.updateAttendanceRecordStudentName(
+                            widget.subjectCode, initialName, newStudentName);
+                      }
+                    } else {
+                      // Add the new student to the list
+                      Student newStudent = Student(name: newStudentName);
+                      students.add(newStudent);
+                      filteredStudents.add(newStudent);
+
+                      // Insert the new student into the database
+                      _databaseHelper.insertStudent(
+                          newStudent, widget.subjectCode);
                     }
-                  } else {
-                    // Add the new student to the list
-                    Student newStudent = Student(name: newStudentName);
-                    students.add(newStudent);
-                    filteredStudents.add(newStudent);
-
-                    // Insert the new student into the database
-                    _databaseHelper.insertStudent(
-                        newStudent, widget.subjectCode);
-                  }
-                  // Save the changes to the database
-                  saveData();
-                });
-                Navigator.pop(context);
+                    // Save the changes to the database
+                    saveData();
+                  });
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                }
               }
             },
             child: const Text(
@@ -1329,6 +1397,54 @@ class GradeScreenState extends State<GradeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showErrorDialog(
+      BuildContext context, String errorMessage) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF826B5D),
+          title: const Text(
+            'Error',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF45191C),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  errorMessage,
+                  style: const TextStyle(
+                    color: Color(0xFF45191C),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFBEA18E),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  color: Color(0xFF45191C),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
