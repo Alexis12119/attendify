@@ -90,10 +90,6 @@ class AttendanceScreenState extends State<AttendanceScreen> {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onLongPress: () {
-                                _showEditStudentDialog(context,
-                                    initialName: filteredStudents[index].name);
-                              },
                               onTap: () {
                                 _showStudentNamePopup(
                                     context, filteredStudents[index].name);
@@ -546,153 +542,6 @@ class AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  _showEditStudentDialog(BuildContext context, {String? initialName}) {
-    TextEditingController nameController =
-        TextEditingController(text: initialName);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xffBEA18E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        title: const Text(
-          'Edit Student',
-          style: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF45191C),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        content: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.0),
-            color: const Color(0xffBEA18E),
-          ),
-          child: TextField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'Student Name',
-              filled: true,
-              fillColor: Color(0xffBEA18E),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: Color(0xFF45191C),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              String newStudentName = nameController.text.trim();
-              if (newStudentName.isNotEmpty) {
-                bool isUsernameAlreadyTaken =
-                    await _databaseHelper.isUsernameTaken(newStudentName);
-                if (isUsernameAlreadyTaken) {
-                  // Show error dialog if the name is already taken
-                  if (!context.mounted) return;
-                  _showErrorDialog(context,
-                      'Name is already taken. Please choose another name.');
-                } else {
-                  setState(() {
-                    if (initialName != null) {
-                      int index = students
-                          .indexWhere((student) => student.name == initialName);
-                      if (index != -1) {
-                        students[index].name = newStudentName;
-                        filteredStudents[index].name = newStudentName;
-
-                        // Update attendance records with the new name
-                        _databaseHelper.updateAttendanceRecordStudentName(
-                            widget.subjectCode, initialName, newStudentName);
-                      }
-                    } else {
-                      // Add the new student to the list
-                      Student newStudent = Student(name: newStudentName);
-                      students.add(newStudent);
-                      filteredStudents.add(newStudent);
-
-                      // Insert the new student into the database
-                      _databaseHelper.insertStudent(
-                          newStudent, widget.subjectCode);
-                    }
-                    // Save the changes to the database
-                    saveData();
-                  });
-                  if (!context.mounted) return;
-                  Navigator.pop(context);
-                }
-              }
-            },
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                color: Color(0xFF45191C),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showErrorDialog(
-      BuildContext context, String errorMessage) async {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF826B5D),
-          title: const Text(
-            'Error',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF45191C),
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text(
-                  errorMessage,
-                  style: const TextStyle(
-                    color: Color(0xFF45191C),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFBEA18E),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'OK',
-                style: TextStyle(
-                  color: Color(0xFF45191C),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   // Function to show the student name popup
   void _showStudentNamePopup(BuildContext context, String fullName) {
@@ -1103,7 +952,6 @@ class DatabaseHelper {
 
         await db.execute('''
     CREATE TABLE teachers(
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
       subjectCode TEXT,
       name TEXT
     )
@@ -1179,10 +1027,6 @@ class GradeScreenState extends State<GradeScreen> {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onLongPress: () {
-                                _showEditStudentDialog(context,
-                                    initialName: filteredStudents[index].name);
-                              },
                               onTap: () {
                                 _showStudentNamePopup(
                                     context, filteredStudents[index].name);
@@ -1327,154 +1171,6 @@ class GradeScreenState extends State<GradeScreen> {
             .toList();
       }
     });
-  }
-
-  _showEditStudentDialog(BuildContext context, {String? initialName}) {
-    TextEditingController nameController =
-        TextEditingController(text: initialName);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xffBEA18E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        title: const Text(
-          'Edit Student',
-          style: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF45191C),
-          ),
-          textAlign: TextAlign.center,
-        ),
-        content: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.0),
-            color: const Color(0xffBEA18E),
-          ),
-          child: TextField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'Student Name',
-              filled: true,
-              fillColor: Color(0xffBEA18E),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: Color(0xFF45191C),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              String newStudentName = nameController.text.trim();
-              if (newStudentName.isNotEmpty) {
-                bool isUsernameAlreadyTaken =
-                    await _databaseHelper.isUsernameTaken(newStudentName);
-                if (isUsernameAlreadyTaken) {
-                  // Show error dialog if the name is already taken
-                  if (!context.mounted) return;
-                  _showErrorDialog(context,
-                      'Name is already taken. Please choose another name.');
-                } else {
-                  setState(() {
-                    if (initialName != null) {
-                      int index = students
-                          .indexWhere((student) => student.name == initialName);
-                      if (index != -1) {
-                        students[index].name = newStudentName;
-                        filteredStudents[index].name = newStudentName;
-
-                        // Update attendance records with the new name
-                        _databaseHelper.updateAttendanceRecordStudentName(
-                            widget.subjectCode, initialName, newStudentName);
-                      }
-                    } else {
-                      // Add the new student to the list
-                      Student newStudent = Student(name: newStudentName);
-                      students.add(newStudent);
-                      filteredStudents.add(newStudent);
-
-                      // Insert the new student into the database
-                      _databaseHelper.insertStudent(
-                          newStudent, widget.subjectCode);
-                    }
-                    // Save the changes to the database
-                    saveData();
-                  });
-                  if (!context.mounted) return;
-                  Navigator.pop(context);
-                }
-              }
-            },
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                color: Color(0xFF45191C),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showErrorDialog(
-      BuildContext context, String errorMessage) async {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF826B5D),
-          title: const Text(
-            'Error',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF45191C),
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text(
-                  errorMessage,
-                  style: const TextStyle(
-                    color: Color(0xFF45191C),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFBEA18E),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'OK',
-                style: TextStyle(
-                  color: Color(0xFF45191C),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   _showGradePopup(BuildContext context, int studentIndex) {
